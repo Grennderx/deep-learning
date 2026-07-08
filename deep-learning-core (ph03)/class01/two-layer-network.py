@@ -31,3 +31,46 @@ class TwoLayerNetwork:
                 error = target - output
                 total_error += error ** 2
                 
+                d_output = error * output * (1 - output)
+
+                saved_w_output = self.w_output[:]
+                hidden_deltas = []
+                for i in range(2):
+                    h = self.hidden_outputs[i]
+                    hd = d_output * saved_w_output[i] * h * (1 - h)
+                    hidden_deltas.append(hd)
+
+                for i in range(2):
+                    self.w_output[i] += self.lr * d_output * self.hidden_outputs[i]
+                self.b_output += self.lr * d_output
+
+                for i in range(2):
+                    for j in range(len(inputs)):
+                        self.w_hidden[i][j] += self.lr * hidden_deltas[i] * inputs[j]
+                    self.b_hidden[i] += self.lr * hidden_deltas[i]
+
+
+xor_data = [
+    ([0, 0], 0),
+    ([0, 1], 1),
+    ([1, 0], 1),
+    ([1, 1], 0),
+]
+
+net = TwoLayerNetwork(learning_rate=2.0)
+net.train(xor_data, epochs=10000)
+for inputs, expected in xor_data:
+    result = net.forward(inputs)
+    predicted = 1 if result >= 0.5 else 0
+    print(f"  {inputs} -> {result:.4f} (rounded: {predicted}, expected {expected})")
+
+
+from sklearn.linear_model import Perceptron as SkPerceptron
+import numpy as np
+
+X = np.array([[0,0],[0,1],[1,0],[1,1]])
+y = np.array([0, 0, 0, 1])
+
+clf = SkPerceptron(max_iter=1000, tol=1e-3)
+clf.fit(X, y)
+print([clf.predict([x])[0] for x in X])
